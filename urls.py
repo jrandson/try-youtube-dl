@@ -9,6 +9,8 @@ app_name = 'tryYoutubeDl'
 
 urlpatterns = [
 	url(r'^$', views.index, name='index' ),
+	url(r'^download_from_url/$', views.download_from_url, name='download_from_url' ),
+	url(r'^download_from_file/$', views.download_from_file, name='download_from_file' ),
 ]
 
 if settings.DEBUG :

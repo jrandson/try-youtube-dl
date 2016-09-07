@@ -1,0 +1,34 @@
+{% load staticfiles %}
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{% block head_title %}Try Youtube-dl {% endblock head_title %}</title>
+        
+        {% include 'rememberTheCheese/base_css.html' %}
+  </head>
+  <body>
+    <div class="container">
+      {% include 'tryYoutubeDl/header.html' %} 
+      <div class="row">
+        <div class="col-md-10 col-md-offset-1">            
+          
+          {% include "tryYoutubeDl/message_display.html" %}
+
+          {% block content %}{% endblock content %} 
+
+          {% include "tryYoutubeDl/_footer.html" %}          
+
+        </div>
+      </div>
+
+    </div> 
+   
+    {% include 'tryYoutubeDl/base_script.html' %}   
+    
+  </body>
+</html>
+
+
+
+
