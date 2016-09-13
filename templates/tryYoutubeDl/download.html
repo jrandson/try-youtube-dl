@@ -4,11 +4,17 @@
     
     {{ block.super }}
 
+
     
     <div class="page-header">
       <h1>Yout download has finished sussecfully </h1>
-    </div>   
-
+    </div> 
+    <ul>
+    <h2>Files downloaded</h2>
+    {% for item in content %}
+    	<li><strong>{{ item }}</strong></li>
+    {% endfor %}  
+    </ul>
     
 
 {% endblock content %}

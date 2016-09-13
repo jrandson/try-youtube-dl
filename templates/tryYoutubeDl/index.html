@@ -41,8 +41,14 @@
     <div class="panel panel-default">
         <div class="panel-body">
         <form method="post" enctype="multipart/form-data" action="{% url 'tryYoutubeDl:download_from_file' %}">
-            {% csrf_token %}
-                  
+            {% csrf_token %}                     
+
+                  <div class="form-group">
+                    <label for="exampleInputEmail1">You can upload a file with a list of url</label>
+                  </div>
+
+                  {{ upload_form.as_p }} 
+
                   <div class="text-right">
                     <label class="radio-inline">
                         <input type="radio" name="file_type" id="inlineRadio1" value="mp3" checked="checked"> Mp3
@@ -50,11 +56,6 @@
                     <label class="radio-inline">
                         <input type="radio" name="file_type" id="inlineRadio2" value="mp4"> Mp4
                     </label>
-                  </div>   
-
-                  <div class="form-group">
-                    <label for="exampleInputEmail1">You can upload a file with a list of url</label>
-                    <input type="file" id="exampleInputFile">
                   </div>
 
                   <button type="submit" class="btn btn-primary">Dnowload</button>

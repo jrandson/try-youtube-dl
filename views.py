@@ -3,20 +3,26 @@ from django.http import HttpResponse, HttpResponseRedirect
 
 import youtube_dl
 from subprocess import call
+from  django.utils import timezone
 
 import gzip
 import zipfile, os, fnmatch
 import shutil
 from os import path, listdir
 
-import youtubedl
+from .forms import UploadFileForm
+
 
 # Create your views here.
 
 def index(request):
+	upl_form = UploadFileForm()
 
-	return render(request,'tryYoutubeDl/index.html',{})
-
+	context = {
+		'upload_form' : upl_form,
+	}
+	
+	return render(request,'tryYoutubeDl/index.html',context)
 
 
 def download_from_url(request):
@@ -26,86 +32,95 @@ def download_from_url(request):
 		url = request.POST['url']
 		file_type = request.POST['file_type']
 
-		download_by_url(url,file_type)
+		download([url],file_type)
 
 		return render(request,'tryYoutubeDl/download.html',{})
 
 	return redirect('tryYoutubeDl:index')
+
 
 def download_from_file(request):
+    if request.method == 'POST':
+        form = UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            f = request.FILES['file_name']
+            file_type = request.FILES['file_type']
+            urls = []
+            for url in f:
+            	if len(url.strip()) > 0:	        		
+	        		urls.append(url)
+	        		print url
 
-	if request.method == 'POST':
+	        
+	        if len(urls) == 0:
+	        	raise Error('give at the least an valid url')
 
-		url = request.POST['url']
-		file_type = request.POST['file_type']
+	        if not path.exists('files'):
+				os.mkdir('files')
 
-		if file_type == 'mp3':
-			download_music_from_url(url)
-		elif file_type == 'mp4':
-			download_video_from_url(url)
-		
-		#ytd.download_musics_from_file_list('lista.txt')
+	        content = download(urls, file_type)
+	      
+            context = {
+            	'urls' : urls,
+            	'content': content,
+            }            
 
-		return render(request,'tryYoutubeDl/download.html',{})
+            #return HttpResponse('Successfull download')
+            return render(request,'tryYoutubeDl/download.html',context)
 
-	return redirect('tryYoutubeDl:index')
+    else:
+        form = UploadFileForm()
+    
+    
+    content  ={
+    	'upload_form' : form,
+    }
 
-def handle_uploaded_file(f):
-    with open('some/file/name.txt', 'wb+') as destination:
-        for chunk in f.chunks():
-            destination.write(chunk)
+    return render(request, 'tryYoutubeDl/index.html', content)
 
-def download_by_url(url, type_file):
-	os.chdir('files')
-	if path.exists('tmp'):
-		shutil.rmtree('tmp')
+def download(urls, file_type='mp4'):
 
-	os.mkdir('tmp')
-	os.chdir('tmp')
-
-	command = "youtube-dl "
-	if type_file == 'mp3':
-		command += "--extract-audio --audio-format mp3 "	
-
-	command += url + " -c"
-	call(command.split(), shell=False)
-
-	content = get_content_dir()
-	if len(content) > 1:
-		file_name = compress_all_files()
-		shutil.move(file_name,'..')
+	if file_type == 'mp3':
+		options = {
+				    'format': 'bestaudio/best', # choice of quality
+				    'extractaudio' : True ,      # only keep the audio
+				    'audioformat' : 'mp3',      # convert to mp3 
+				    'outtmpl': '%(id)s',        # name the file the ID of the video
+				    'noplaylist' : True,        # only download single song, not playlist
+				}
 	else:
-		shutil.copy(content[0],'..')
+		options = {}		
 
-	os.chdir('..')
-	shutil.rmtree('tmp')
-	os.chdir('..')
+	with youtube_dl.YoutubeDL(options) as ydl:
+	    ydl.download(urls)
 
-def download_by_filelist(url):
+	content = get_content_dir()	
+
+	return content
+
+def get_url_from_file(url_file):
 	try:
-		if not self.syst.exists(file_list):
+		if not self.syst.exists(url_file):
 			raise Error('File not found')
 
-		f = open(file_list,'r')
-
+		f = open(url_file,'r')
+		urls = []
 		for url in f:
 			if url :
-				command = "youtube-dl --extract-audio --audio-format mp3 "
-				command += url + " -c"
-				print "downloading " + url
-				call(command.split(), shell=False)			
-
+				urls.append(url)
 		f.close()		
 		
+		return urls
 	except Error, e:
 		print 'An error has ocurred', e.value
+		return None
 
 def compress_all_files(directory = None):
 	
 	if directory == None:
 		directory = '.'
 
-	file_name = 'download.zip'
+	file_name = 'download' + str(timezone.now())+'.zip'
 
 	contents = get_content_dir(directory)
 
@@ -126,6 +141,13 @@ def zip_file(file_name):
 	zip_file .write(file_name)
 	zip_file .close()
 
+def get_meta_info(url):
+
+	with youtube_dl.YoutubeDL({}) as ydl:
+	    
+		meta = ydl.extract_info(url, download=False)
+
+	return meta
 
 #---------------------------------------------------
 
